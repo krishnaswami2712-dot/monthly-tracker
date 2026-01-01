@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="apple-touch-icon" href="apple-touch-icon.png.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -26,38 +25,16 @@ h1 {
     margin-bottom: 8px;
 }
 
-/* Scroll wrapper */
 .table-wrap {
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     border: 1px solid #222;
 }
 
-/* Table */
 table {
     border-collapse: collapse;
     font-size: 12px;
     background: #111;
     min-width: 1000px;
-}
-
-/* Sticky task column */
-th.task, td.task {
-    position: sticky;
-    left: 0;
-    background: #111;
-    z-index: 2;
-    min-width: 220px;
-    max-width: 220px;
-}
-
-/* Sticky delete column */
-th.del, td.del {
-    position: sticky;
-    right: 0;
-    background: #111;
-    z-index: 2;
-    width: 36px;
 }
 
 th, td {
@@ -71,7 +48,14 @@ th {
     font-weight: 400;
 }
 
-/* Task input */
+th.task, td.task {
+    position: sticky;
+    left: 0;
+    background: #111;
+    z-index: 2;
+    min-width: 220px;
+}
+
 input[type="text"] {
     width: 100%;
     border: none;
@@ -79,17 +63,14 @@ input[type="text"] {
     color: #eaeaea;
     font-size: 12px;
     outline: none;
-    white-space: normal;
 }
 
-/* Checkbox */
 input[type="checkbox"] {
     width: 18px;
     height: 18px;
     accent-color: #3ddc84;
 }
 
-/* Buttons */
 button {
     margin-top: 8px;
     margin-right: 6px;
@@ -101,22 +82,24 @@ button {
     cursor: pointer;
 }
 
-/* Delete button */
-.del-btn {
-    background: transparent;
-    border: none;
-    color: #777;
-    font-size: 18px;
-    cursor: pointer;
-}
-.del-btn:hover {
-    color: #ff6b6b;
+#charts {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
 }
 
-#chartBox {
-    display: none;
-    margin-top: 16px;
-    max-width: 280px;
+.task-chart {
+    background: #111;
+    border: 1px solid #222;
+    padding: 10px;
+}
+
+.task-chart h3 {
+    font-size: 12px;
+    font-weight: 400;
+    color: #aaa;
+    margin-bottom: 6px;
 }
 </style>
 </head>
@@ -136,15 +119,13 @@ button {
 </div>
 
 <button onclick="addTask()">Add task</button>
-<button onclick="toggleChart()">Show progress</button>
 
-<div id="chartBox">
-    <canvas id="progressChart"></canvas>
-</div>
+<div id="charts"></div>
 
 <script>
 const DAYS = 31;
-let data = JSON.parse(localStorage.getItem("minimalTracker")) || [];
+let data = JSON.parse(localStorage.getItem("monthlyTracker")) || [];
+let charts = [];
 
 /* Build header */
 const header = document.querySelector("#tracker thead tr");
@@ -153,115 +134,106 @@ for (let d = 1; d <= DAYS; d++) {
     th.textContent = d;
     header.appendChild(th);
 }
-const delHeader = document.createElement("th");
-delHeader.className = "del";
-delHeader.textContent = "×";
-header.appendChild(delHeader);
 
 /* Load */
 window.onload = () => {
-    renderAll();
-    updateChart();
+    renderTable();
+    renderCharts();
 };
 
 /* Save */
 function save() {
-    localStorage.setItem("minimalTracker", JSON.stringify(data));
-    updateChart();
-}
-
-/* Render all rows */
-function renderAll() {
-    const tbody = document.querySelector("#tracker tbody");
-    tbody.innerHTML = "";
-    data.forEach((_, i) => renderRow(i));
+    localStorage.setItem("monthlyTracker", JSON.stringify(data));
+    renderCharts();
 }
 
 /* Add task */
 function addTask() {
-    data.push({ name: "", days: Array(DAYS).fill(false) });
-    renderAll();
+    data.push({
+        name: "",
+        days: Array(DAYS).fill(false)
+    });
+    renderTable();
     save();
 }
 
-/* Render row */
-function renderRow(index) {
-    const task = data[index];
-    const row = document.querySelector("#tracker tbody").insertRow();
+/* Render table */
+function renderTable() {
+    const tbody = document.querySelector("#tracker tbody");
+    tbody.innerHTML = "";
 
-    // Task name
-    const nameCell = row.insertCell();
-    nameCell.className = "task";
-    const input = document.createElement("input");
-    input.type = "text";
-    input.placeholder = "Task name";
-    input.value = task.name;
-    input.oninput = () => {
-        data[index].name = input.value;
-        save();
-    };
-    nameCell.appendChild(input);
+    data.forEach((task, i) => {
+        const row = tbody.insertRow();
 
-    // Days
-    task.days.forEach((done, d) => {
-        const cell = row.insertCell();
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = done;
-        cb.onchange = () => {
-            data[index].days[d] = cb.checked;
+        // Task name
+        const nameCell = row.insertCell();
+        nameCell.className = "task";
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "Task name";
+        input.value = task.name;
+        input.oninput = () => {
+            data[i].name = input.value;
             save();
         };
-        cell.appendChild(cb);
+        nameCell.appendChild(input);
+
+        // Days
+        task.days.forEach((done, d) => {
+            const cell = row.insertCell();
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.checked = done;
+            cb.onchange = () => {
+                data[i].days[d] = cb.checked;
+                save();
+            };
+            cell.appendChild(cb);
+        });
     });
-
-    // Delete
-    const delCell = row.insertCell();
-    delCell.className = "del";
-    const delBtn = document.createElement("button");
-    delBtn.className = "del-btn";
-    delBtn.textContent = "×";
-    delBtn.onclick = () => {
-        data.splice(index, 1);
-        renderAll();
-        save();
-    };
-    delCell.appendChild(delBtn);
 }
 
-/* Chart */
-const chart = new Chart(document.getElementById("progressChart"), {
-    type: "pie",
-    data: {
-        labels: ["Completed", "Remaining"],
-        datasets: [{
-            data: [0, 0],
-            backgroundColor: ["#3ddc84", "#222"]
-        }]
-    },
-    options: {
-        plugins: { legend: { display: false } }
-    }
-});
+/* Render per-task charts */
+function renderCharts() {
+    const container = document.getElementById("charts");
+    container.innerHTML = "";
+    charts = [];
 
-function updateChart() {
-    let completed = 0, total = 0;
-    data.forEach(t => t.days.forEach(d => {
-        total++;
-        if (d) completed++;
-    }));
-    chart.data.datasets[0].data = [completed, total - completed];
-    chart.update();
-}
+    data.forEach((task, i) => {
+        const box = document.createElement("div");
+        box.className = "task-chart";
 
-function toggleChart() {
-    const box = document.getElementById("chartBox");
-    box.style.display = box.style.display === "none" ? "block" : "none";
+        const title = document.createElement("h3");
+        title.textContent = task.name || `Task ${i + 1}`;
+
+        const canvas = document.createElement("canvas");
+        canvas.height = 160;
+
+        box.appendChild(title);
+        box.appendChild(canvas);
+        container.appendChild(box);
+
+        const completed = task.days.filter(d => d).length;
+        const remaining = DAYS - completed;
+
+        const chart = new Chart(canvas, {
+            type: "pie",
+            data: {
+                labels: ["Completed", "Remaining"],
+                datasets: [{
+                    data: [completed, remaining],
+                    backgroundColor: ["#3ddc84", "#222"]
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        charts.push(chart);
+    });
 }
 </script>
 
 </body>
 </html>
-
-
-
