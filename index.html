@@ -22,7 +22,14 @@ body {
 h1 {
     font-size: 16px;
     font-weight: 500;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+}
+
+#quote {
+    font-size: 12px;
+    color: #9f9f9f;
+    margin-bottom: 10px;
+    font-style: italic;
 }
 
 .table-wrap {
@@ -73,7 +80,6 @@ input[type="checkbox"] {
 
 button {
     margin-top: 8px;
-    margin-right: 6px;
     padding: 8px 12px;
     font-size: 12px;
     border: 1px solid #333;
@@ -93,6 +99,7 @@ button {
     background: #111;
     border: 1px solid #222;
     padding: 10px;
+    position: relative;
 }
 
 .task-chart h3 {
@@ -100,12 +107,25 @@ button {
     font-weight: 400;
     color: #aaa;
     margin-bottom: 6px;
+    text-align: center;
+}
+
+.percent {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+    font-weight: 600;
+    color: #3ddc84;
+    pointer-events: none;
 }
 </style>
 </head>
 <body>
 
 <h1>Monthly Tracker</h1>
+<div id="quote"></div>
 
 <div class="table-wrap">
 <table id="tracker">
@@ -123,11 +143,42 @@ button {
 <div id="charts"></div>
 
 <script>
+/* ===================== CONFIG ===================== */
 const DAYS = 31;
-let data = JSON.parse(localStorage.getItem("monthlyTracker")) || [];
-let charts = [];
+const STORAGE_KEY = "monthlyTracker";
 
-/* Build header */
+/* ===================== DATA ===================== */
+let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+/* ===================== QUOTES ===================== */
+const quotes = [
+    "Consistency beats motivation.",
+    "Small steps every day.",
+    "Discipline is freedom.",
+    "Progress, not perfection.",
+    "Show up even when you don’t feel like it.",
+    "Your future self is watching.",
+    "Do it once. Do it daily.",
+    "Days decide decades.",
+    "Focus on today’s checkbox.",
+    "Win the day."
+];
+
+function loadQuote() {
+    const today = new Date().toDateString();
+    const saved = JSON.parse(localStorage.getItem("dailyQuote"));
+
+    if (saved && saved.date === today) {
+        document.getElementById("quote").textContent = saved.quote;
+        return;
+    }
+
+    const quote = quotes[Math.floor(Math.random() * quotes.length)];
+    localStorage.setItem("dailyQuote", JSON.stringify({ date: today, quote }));
+    document.getElementById("quote").textContent = quote;
+}
+
+/* ===================== TABLE ===================== */
 const header = document.querySelector("#tracker thead tr");
 for (let d = 1; d <= DAYS; d++) {
     const th = document.createElement("th");
@@ -135,29 +186,6 @@ for (let d = 1; d <= DAYS; d++) {
     header.appendChild(th);
 }
 
-/* Load */
-window.onload = () => {
-    renderTable();
-    renderCharts();
-};
-
-/* Save */
-function save() {
-    localStorage.setItem("monthlyTracker", JSON.stringify(data));
-    renderCharts();
-}
-
-/* Add task */
-function addTask() {
-    data.push({
-        name: "",
-        days: Array(DAYS).fill(false)
-    });
-    renderTable();
-    save();
-}
-
-/* Render table */
 function renderTable() {
     const tbody = document.querySelector("#tracker tbody");
     tbody.innerHTML = "";
@@ -165,7 +193,6 @@ function renderTable() {
     data.forEach((task, i) => {
         const row = tbody.insertRow();
 
-        // Task name
         const nameCell = row.insertCell();
         nameCell.className = "task";
         const input = document.createElement("input");
@@ -178,7 +205,6 @@ function renderTable() {
         };
         nameCell.appendChild(input);
 
-        // Days
         task.days.forEach((done, d) => {
             const cell = row.insertCell();
             const cb = document.createElement("input");
@@ -193,13 +219,15 @@ function renderTable() {
     });
 }
 
-/* Render per-task charts */
+/* ===================== CHARTS ===================== */
 function renderCharts() {
     const container = document.getElementById("charts");
     container.innerHTML = "";
-    charts = [];
 
     data.forEach((task, i) => {
+        const completed = task.days.filter(d => d).length;
+        const percent = Math.round((completed / DAYS) * 100);
+
         const box = document.createElement("div");
         box.className = "task-chart";
 
@@ -209,19 +237,21 @@ function renderCharts() {
         const canvas = document.createElement("canvas");
         canvas.height = 160;
 
+        const percentText = document.createElement("div");
+        percentText.className = "percent";
+        percentText.textContent = percent + "%";
+
         box.appendChild(title);
         box.appendChild(canvas);
+        box.appendChild(percentText);
         container.appendChild(box);
 
-        const completed = task.days.filter(d => d).length;
-        const remaining = DAYS - completed;
-
-        const chart = new Chart(canvas, {
+        new Chart(canvas, {
             type: "pie",
             data: {
                 labels: ["Completed", "Remaining"],
                 datasets: [{
-                    data: [completed, remaining],
+                    data: [completed, DAYS - completed],
                     backgroundColor: ["#3ddc84", "#222"]
                 }]
             },
@@ -229,11 +259,29 @@ function renderCharts() {
                 plugins: { legend: { display: false } }
             }
         });
-
-        charts.push(chart);
     });
 }
+
+/* ===================== CORE ===================== */
+function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    renderCharts();
+}
+
+function addTask() {
+    data.push({ name: "", days: Array(DAYS).fill(false) });
+    renderTable();
+    save();
+}
+
+/* ===================== INIT ===================== */
+window.onload = () => {
+    loadQuote();
+    renderTable();
+    renderCharts();
+};
 </script>
 
 </body>
 </html>
+
