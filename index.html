@@ -22,7 +22,7 @@ body {
 h1 {
     font-size: 16px;
     font-weight: 500;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 #quote {
@@ -32,6 +32,7 @@ h1 {
     font-style: italic;
 }
 
+/* TABLE */
 .table-wrap {
     overflow-x: auto;
     border: 1px solid #222;
@@ -88,34 +89,49 @@ button {
     cursor: pointer;
 }
 
+/* CHART ROW */
 #charts {
-    margin-top: 16px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 12px;
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
 }
 
 .task-chart {
     background: #111;
     border: 1px solid #222;
-    padding: 10px;
+    padding: 8px;
+    min-width: 140px;
+    max-width: 140px;
     position: relative;
+    flex-shrink: 0;
 }
 
 .task-chart h3 {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 400;
     color: #aaa;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task-chart canvas {
+    width: 120px !important;
+    height: 120px !important;
+    margin: 0 auto;
+    display: block;
 }
 
 .percent {
     position: absolute;
-    top: 50%;
+    top: 55%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
     color: #3ddc84;
     pointer-events: none;
@@ -143,14 +159,12 @@ button {
 <div id="charts"></div>
 
 <script>
-/* ===================== CONFIG ===================== */
 const DAYS = 31;
 const STORAGE_KEY = "monthlyTracker";
 
-/* ===================== DATA ===================== */
 let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-/* ===================== QUOTES ===================== */
+/* QUOTES */
 const quotes = [
     "Consistency beats motivation.",
     "Small steps every day.",
@@ -160,7 +174,6 @@ const quotes = [
     "Your future self is watching.",
     "Do it once. Do it daily.",
     "Days decide decades.",
-    "Focus on today’s checkbox.",
     "Win the day."
 ];
 
@@ -178,7 +191,7 @@ function loadQuote() {
     document.getElementById("quote").textContent = quote;
 }
 
-/* ===================== TABLE ===================== */
+/* TABLE HEADER */
 const header = document.querySelector("#tracker thead tr");
 for (let d = 1; d <= DAYS; d++) {
     const th = document.createElement("th");
@@ -186,6 +199,7 @@ for (let d = 1; d <= DAYS; d++) {
     header.appendChild(th);
 }
 
+/* TABLE */
 function renderTable() {
     const tbody = document.querySelector("#tracker tbody");
     tbody.innerHTML = "";
@@ -219,7 +233,7 @@ function renderTable() {
     });
 }
 
-/* ===================== CHARTS ===================== */
+/* CHARTS */
 function renderCharts() {
     const container = document.getElementById("charts");
     container.innerHTML = "";
@@ -235,7 +249,6 @@ function renderCharts() {
         title.textContent = task.name || `Task ${i + 1}`;
 
         const canvas = document.createElement("canvas");
-        canvas.height = 160;
 
         const percentText = document.createElement("div");
         percentText.className = "percent";
@@ -256,13 +269,14 @@ function renderCharts() {
                 }]
             },
             options: {
+                responsive: false,
                 plugins: { legend: { display: false } }
             }
         });
     });
 }
 
-/* ===================== CORE ===================== */
+/* CORE */
 function save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     renderCharts();
@@ -274,7 +288,7 @@ function addTask() {
     save();
 }
 
-/* ===================== INIT ===================== */
+/* INIT */
 window.onload = () => {
     loadQuote();
     renderTable();
