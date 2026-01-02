@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<title>Weekly Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    font-family: system-ui, sans-serif;
+    background: #0b0b0b;
+    color: #eaeaea;
+    margin: 0;
+    padding: 12px;
+}
+
+h1 {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+button {
+    margin-bottom: 12px;
+    padding: 6px 10px;
+    font-size: 11px;
+    background: #111;
+    color: #eaeaea;
+    border: 1px solid #333;
+    cursor: pointer;
+}
+
+.box {
+    background: #111;
+    border: 1px solid #222;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.label {
+    font-size: 11px;
+    color: #aaa;
+}
+
+.value {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.small {
+    font-size: 11px;
+    color: #888;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📅 Weekly Report</h1>
+<button onclick="location.href='index.html'">← Back</button>
+
+<div class="box">
+    <div class="label">Total Completions</div>
+    <div class="value" id="totalDone">0</div>
+</div>
+
+<div class="box">
+    <div class="label">Active Days</div>
+    <div class="value" id="activeDays">0 / 7</div>
+</div>
+
+<div class="box">
+    <div class="label">Completion Rate</div>
+    <div class="value" id="rate">0%</div>
+</div>
+
+<div class="box">
+    <div class="label">Best Day</div>
+    <div class="value" id="bestDay">—</div>
+</div>
+
+<div class="box">
+    <div class="label">Daily Progress</div>
+    <canvas id="weekChart" height="200"></canvas>
+</div>
+
+<script>
+/* LOAD DATA */
+const data = JSON.parse(localStorage.getItem("monthlyTracker")) || [];
+
+/* DATE SETUP */
+const today = new Date();
+const todayIndex = today.getDate() - 1;
+const start = Math.max(0, todayIndex - 6);
+
+/* BUILD WEEK DATA */
+const dayTotals = [];
+const labels = [];
+let total = 0;
+let active = 0;
+let best = { count: 0, label: "-" };
+
+for (let d = start; d <= todayIndex; d++) {
+    let count = 0;
+    data.forEach(t => {
+        if (t.days[d]) count++;
+    });
+
+    const date = new Date(today.getFullYear(), today.getMonth(), d + 1);
+    const label = date.toLocaleDateString(undefined, { weekday: "short" });
+
+    labels.push(label);
+    dayTotals.push(count);
+    total += count;
+
+    if (count > 0) active++;
+    if (count > best.count) best = { count, label };
+}
+
+/* DISPLAY NUMBERS */
+totalDone.textContent = total;
+activeDays.textContent = `${active} / 7`;
+rate.textContent = total ? Math.round((active / 7) * 100) + "%" : "0%";
+bestDay.textContent = best.label;
+
+/* CHART */
+new Chart(document.getElementById("weekChart"), {
+    type: "bar",
+    data: {
+        labels,
+        datasets: [{
+            data: dayTotals,
+            backgroundColor: "#3ddc84"
+        }]
+    },
+    options: {
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            x: { ticks: { color: "#aaa" } },
+            y: {
+                beginAtZero: true,
+                ticks: { color: "#aaa", precision: 0 }
+            }
+        }
+    }
+});
+</script>
+
+</body>
+</html>
