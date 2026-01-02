@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<title>Levels</title>
+
+<style>
+body {
+    font-family: system-ui, sans-serif;
+    background: #0b0b0b;
+    color: #eaeaea;
+    margin: 0;
+    padding: 12px;
+}
+
+h1 {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+button {
+    margin-bottom: 12px;
+    padding: 6px 10px;
+    font-size: 11px;
+    background: #111;
+    color: #eaeaea;
+    border: 1px solid #333;
+    cursor: pointer;
+}
+
+/* LEVEL LIST */
+.level {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    border: 1px solid #222;
+    background: #111;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.level.done {
+    border-color: #3ddc84;
+    color: #3ddc84;
+}
+
+.level.current {
+    border-color: #ffb703;
+    color: #ffb703;
+}
+
+.level.locked {
+    opacity: 0.5;
+}
+
+.level span {
+    font-size: 11px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🏅 Level Journey</h1>
+<button onclick="location.href='index.html'">← Back</button>
+
+<div id="levelList"></div>
+
+<script>
+/* LOAD XP */
+const xp = Number(localStorage.getItem("xp")) || 0;
+
+/* LEVEL NAME LOGIC (same as main app) */
+function levelInfo(level) {
+    if (level <= 10) {
+        const base = [
+            {emoji:"🌱",name:"Newcomer"},
+            {emoji:"🧭",name:"Beginner"},
+            {emoji:"🔍",name:"Focused"},
+            {emoji:"🧠",name:"Disciplined"},
+            {emoji:"🔁",name:"Consistent"},
+            {emoji:"🔥",name:"Determined"},
+            {emoji:"⚔️",name:"Relentless"},
+            {emoji:"🏆",name:"Elite"},
+            {emoji:"👑",name:"Master"},
+            {emoji:"🐉",name:"Legendary"}
+        ];
+        return base[level-1];
+    }
+    if (level <= 20) return {emoji:"🚀",name:"Ascendant"};
+    if (level <= 30) return {emoji:"🧱",name:"Builder"};
+    if (level <= 40) return {emoji:"⚡",name:"Driven"};
+    if (level <= 50) return {emoji:"🦁",name:"Unbreakable"};
+    if (level <= 60) return {emoji:"🧠",name:"Mastermind"};
+    if (level <= 70) return {emoji:"🛡️",name:"Vanguard"};
+    if (level <= 80) return {emoji:"🏹",name:"Apex"};
+    if (level <= 90) return {emoji:"🌌",name:"Mythic"};
+    return {emoji:"☀️",name:"Transcendent"};
+}
+
+/* CALCULATE CURRENT LEVEL */
+function getCurrentLevel() {
+    let lvl = 1;
+    let remaining = xp;
+    while (remaining >= lvl * 100 && lvl < 100) {
+        remaining -= lvl * 100;
+        lvl++;
+    }
+    return lvl;
+}
+
+const currentLevel = getCurrentLevel();
+const list = document.getElementById("levelList");
+
+/* RENDER LEVELS */
+for (let i = 1; i <= 100; i++) {
+    const info = levelInfo(i);
+    const div = document.createElement("div");
+    div.className = "level";
+
+    if (i < currentLevel) div.classList.add("done");
+    else if (i === currentLevel) div.classList.add("current");
+    else div.classList.add("locked");
+
+    div.innerHTML = `
+        <div>${info.emoji} Level ${i} — ${info.name}</div>
+        <span>${i < currentLevel ? "Completed" : i === currentLevel ? "Current" : `Unlock at ${i * 100} XP`}</span>
+    `;
+
+    list.appendChild(div);
+}
+</script>
+
+</body>
+</html>
