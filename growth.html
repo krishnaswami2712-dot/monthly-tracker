@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<title>Growth</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    font-family: system-ui, sans-serif;
+    background: #0b0b0b;
+    color: #eaeaea;
+    margin: 0;
+    padding: 12px;
+}
+
+h1 {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+button {
+    margin-bottom: 12px;
+    padding: 6px 10px;
+    font-size: 11px;
+    background: #111;
+    color: #eaeaea;
+    border: 1px solid #333;
+    cursor: pointer;
+}
+
+.chartBox {
+    background: #111;
+    border: 1px solid #222;
+    padding: 10px;
+    margin-bottom: 14px;
+}
+
+.chartBox h3 {
+    font-size: 12px;
+    font-weight: 400;
+    color: #aaa;
+    text-align: center;
+    margin-bottom: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📈 Growth</h1>
+
+<button onclick="location.href='index.html'">← Back to Tracker</button>
+
+<div class="chartBox">
+    <h3>Daily Growth</h3>
+    <canvas id="growthChart" height="220"></canvas>
+</div>
+
+<script>
+/* LOAD DATA */
+const data = JSON.parse(localStorage.getItem("monthlyTracker")) || [];
+
+/* DAYS IN MONTH */
+const now = new Date();
+const DAYS = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+/* BUILD DAILY TOTALS */
+const dailyTotals = Array(DAYS).fill(0);
+
+data.forEach(task => {
+    task.days.forEach((done, dayIndex) => {
+        if (done) dailyTotals[dayIndex]++;
+    });
+});
+
+/* LABELS */
+const labels = dailyTotals.map((_, i) => i + 1);
+
+/* CHART */
+new Chart(document.getElementById("growthChart"), {
+    type: "line",
+    data: {
+        labels,
+        datasets: [{
+            label: "Completed tasks",
+            data: dailyTotals,
+            borderColor: "#3ddc84",
+            backgroundColor: "rgba(61,220,132,0.15)",
+            tension: 0.3,
+            fill: true,
+            pointRadius: 3
+        }]
+    },
+    options: {
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            x: { ticks: { color: "#888" } },
+            y: {
+                ticks: { color: "#888", precision: 0 },
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+
+</body>
+</html>
